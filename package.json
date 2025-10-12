@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "ink": "^6.3.1",
+    "react": "^19.2.0",
+    "term-size": "^3.0.2"
+  }
+}
