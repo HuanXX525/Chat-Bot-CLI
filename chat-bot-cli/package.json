@@ -17,9 +17,15 @@
 	],
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
+		"boxen": "^8.0.1",
+		"date-fns": "^4.1.0",
+		"dotenv": "^17.2.3",
 		"ink": "^6.3.1",
+		"ink-text-input": "^6.0.0",
 		"meow": "^11.0.0",
-		"react": "^19.2.0"
+		"openai": "^6.3.0",
+		"react": "^19.2.0",
+		"winston": "^3.18.3"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.21.0",

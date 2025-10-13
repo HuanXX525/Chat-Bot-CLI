@@ -1,0 +1,2 @@
+Error: altering stdout isn't currently supported on windows
+
