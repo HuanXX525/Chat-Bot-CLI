@@ -1,7 +1,9 @@
-import {getFilesWithDepth, removeParentDir} from '../..//Tools/fileio.js';
+import {getFilesWithDepth, readJsonFile, removeParentDir} from '../..//Tools/fileio.js';
 import {execSync} from 'child_process';
 import logger from '../../Tools/logconfig.js';
 import { parseJSON } from '../executetoolbot.js';
+import path from 'path';
+import fs from 'fs';
 /**
  * 获取从开始菜单中的应用程序列表
  * @returns {Object} - 返回一个对象，包含开始菜单的路径和应用程序的列表
@@ -14,17 +16,31 @@ import { parseJSON } from '../executetoolbot.js';
  * // }
  */
 
-function getApplicationListByStartMenu() {
-	const startMenuPath = 'C:/ProgramData/Microsoft/Windows/Start Menu/Programs';
-	const applicationFastList = getFilesWithDepth(startMenuPath, {
-		autoDepth: true,
-	});
-	return {
-		startMenuPath,
-		applicationFastList,
-	};
+
+const fileContent = readJsonFile(
+		path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
+	);
+const startMenuPaths = fileContent?.ApplicationScanDir;
+
+function getApplicationListByPaths() {
+	const applicationList = [];
+
+	for(let i = 0; i < startMenuPaths.length; i++) {
+		applicationList.push(
+			...getFilesWithDepth(
+				startMenuPaths[i],
+				{
+					maxDepth: 5,
+					delParent: true,
+				},
+				['exe', 'lnk'],
+			),
+		);
+	}
+	return applicationList;
 }
 
+// export { getApplicationListByPaths };
 /**
  * 启动应用程序
  * @param {string} path - 应用程序的路径
@@ -45,23 +61,14 @@ function _launchApplication(path) {
 
 import executeToolBot from '../executetoolbot.js';
 import { log } from 'console';
+import { start } from 'repl';
 
 /** 程序列表 */
-const applicationList = getApplicationListByStartMenu();
-const relativePathList = applicationList.applicationFastList.map(file =>
-	removeParentDir(file, applicationList.startMenuPath),
-);
-const nameToPath = new Map(
-	relativePathList.map((name, index) => [
-		name,
-		applicationList.applicationFastList[index],
-	]),
-);
-// console.log(relativePathList);
-// console.log(nameToPath);
+const applicationList = getApplicationListByPaths();
+
 
 const description = {
-	task: '从information中给的列表中选择一个符合用户要求的应用程序，如果有多个，优先选择系统相关的而不是第三方软件的',
+	task: '从information中给的列表中选择一个符合用户要求的应用程序，如果有多个，优先选择系统相关的而不是第三方软件的，有时可能需要你将用户的软件名称翻译成英文才能匹配',
 	toolDescription: {
 		name: 'launchapplication',
 		description: '执行你所选择的应用程序',
@@ -74,7 +81,7 @@ const description = {
 			},
 		},
 	},
-	information: relativePathList.join('\n'),
+	information: applicationList.join('\n'),
 };
 
 
@@ -94,12 +101,12 @@ const description = {
 async function launchApplication(userDemand) {
 	executeToolBot.addToolDescription(JSON.stringify(description));
 
-    let path = undefined;
+    let _path = undefined;
     let result = undefined;
     let message = "";
 
 
-	for (let i = 0; i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !path; i++) {
+	for (let i = 0; i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !_path; i++) {
 		try {
 			const response = await executeToolBot.sendMessage(userDemand);
 			logger.info(`返回函数参数${response}`);
@@ -111,13 +118,18 @@ async function launchApplication(userDemand) {
 				break;
 			}
 			logger.info(`准备启动应用程序：${applicationName}`);
-			path = nameToPath.get(applicationName);
-			logger.info(`获取到应用程序路径：${path}`);
-			if (!path) {
+			for(let j = 0; j < startMenuPaths.length; j++) {
+				_path = path.join(startMenuPaths[j], applicationName);
+				if (fs.existsSync(_path)) {
+					break;
+				}
+			}
+			logger.info(`获取到应用程序路径：${_path}`);
+			if (!_path) {
 				userDemand = '没有在列表中找到你所选择的应用程序，请重新回答';
 				logger.warn(`没有在列表中找到所选择的应用程序，准备重试第${i + 1}次`);
 			} else {
-				result = _launchApplication(path);
+				result = _launchApplication(_path);
                 break;
 			}
 		} catch (error) {
@@ -130,7 +142,7 @@ async function launchApplication(userDemand) {
 
     return {
         result: result,
-        data: [{arg: "path", value: path}],
+        data: [{arg: "path", value: _path}],
         message: (result ? '应用程序启动成功 ' : '应用程序启动失败 ') + message,
     };
 }

@@ -55,11 +55,31 @@ const getDirectSubDirNames = (dirPath, needPath = false) => {
  * const result = getDirectSubDirFiles(expressionPath);
  * console.log(result); // ['file1.txt', 'file2.txt']
  */
-function getDirectSubDirFiles(expressionPath, needPath = false) {
-  const fileNames = fs
-		.readdirSync(expressionPath)
-		.filter(file => fs.statSync(path.join(expressionPath, file)).isFile());
-	return needPath ? fileNames.map(file => path.join(expressionPath, file)) : fileNames;
+function getDirectSubDirFiles(
+	expressionPath,
+	needPath = false,
+	allowedExtensions = [],
+) {
+	const fileNames = fs.readdirSync(expressionPath).filter(file => {
+		// 首先检查是否为文件
+		const isFile = fs.statSync(path.join(expressionPath, file)).isFile();
+		if (!isFile) return false;
+
+		// 如果没有指定允许的后缀，则全部保留
+		if (allowedExtensions.length === 0) return true;
+
+		// 检查文件后缀是否在允许的列表中
+		const ext = path.extname(file).toLowerCase();
+		// 处理不带点的后缀名情况（如"js"而不是".js"）
+		const normalizedExt = ext.startsWith('.') ? ext : `.${ext}`;
+		return allowedExtensions.some(
+			allowed => `.${allowed.toLowerCase()}` === normalizedExt,
+		);
+	});
+
+	return needPath
+		? fileNames.map(file => path.join(expressionPath, file))
+		: fileNames;
 }
 // console.log(getDirectSubDirFiles(TESTPATH));
 // console.log(getDirectSubDirFiles(TESTPATH, true));
@@ -79,13 +99,15 @@ function getDirectSubDirFiles(expressionPath, needPath = false) {
  */
 function getFilesWithDepth(
   startDir,
-  options = {},
+	options = {},
+  extensions = []
 ) {
   // 默认配置
   const {
     includeDir = false,
     autoDepth = false,
-    maxDepth = 1
+	  maxDepth = 1,
+	delParent = false
   } = options;
 
   let result = [];
@@ -95,7 +117,7 @@ function getFilesWithDepth(
 		let nextDepthFolder = [];
 		for (let folder of folders) {
 			nextDepthFolder.push(...getDirectSubDirNames(folder, true));
-			result.push(...getDirectSubDirFiles(folder, true));
+			result.push(...getDirectSubDirFiles(folder, true, extensions));
 			if (includeDir) {
 				result.push(...folder);
 			}
@@ -103,7 +125,7 @@ function getFilesWithDepth(
 		folders = [...nextDepthFolder]; // 复制一份新数组
 		nextDepthFolder = [];
 	}
-  return result;
+  return delParent ? result.map(file => removeParentDir(file, startDir)) : result;
 }
 // console.log(getFilesWithDepth(TESTPATH, 1));
 // console.log(getFilesWithDepth(TESTPATH, {autoDepth: true}));
