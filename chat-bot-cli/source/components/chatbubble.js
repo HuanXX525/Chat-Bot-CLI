@@ -59,9 +59,9 @@ async function consoleChat(messages, characterName, expression, expressionLast) 
 }
 
 function consoleAction(result, data, message) {
-	message = (result ? "✅" : "❌") + ' ' + message + "\n";
+	message = (result ? "✅" : "❌") + ' ' + message;
 	if(data?.length > 0) {
-		message += data.map(item => item.arg + ": " + item.value).join("\n");
+		message += "\n" + data.map(item => item.arg + ": " + item.value).join("\n");
 	}
 	
 	console.log(boxen(message, {

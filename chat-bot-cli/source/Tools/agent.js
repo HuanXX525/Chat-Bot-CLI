@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import { assert } from "console";
 import msgpack from "@msgpack/msgpack";
+import { format } from "date-fns";
 
 class ChatMessage {
 	/**
@@ -143,7 +144,8 @@ class ChatBotAgent extends Agent {
     }
 
     loadChatHistory() {
-        this.chatHistory.loadChatHistory(path.join(process.env.ROOT_PATH, 'Characters', this.characterName, 'ChatHistory.msgpack'));
+		this.chatHistory.loadChatHistory(path.join(process.env.ROOT_PATH, 'Characters', this.characterName, 'ChatHistory.msgpack'));
+		this.chatHistory.addDeveloperMessage(`用户进入了聊天，时间${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`);
     }
 }
 

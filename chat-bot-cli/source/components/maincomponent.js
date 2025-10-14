@@ -8,7 +8,9 @@ import React, {useEffect, useState} from 'react';
 import {Box, Spacer} from 'ink';
 import {Spinner} from '@inkjs/ui';
 import logger from '../Tools/logconfig.js';
-import {executeFunction} from '../function/executetoolbot.js';
+import { executeFunction } from '../function/executetoolbot.js';
+import {format} from 'date-fns';
+
 
 function parseResponse(response) {
 	try {
@@ -167,6 +169,7 @@ function SearchQuery() {
 						expression,
 						expressionLast,
 					);
+					expressionLast = expression;
 					beforeReactNow = true;
 					// console.log("GERE");
 					manageResponseing(false);
@@ -176,6 +179,7 @@ function SearchQuery() {
 		// 打印消息
 		manageResponseing(true);
 		await consoleChat(messages, characterName, expression, expressionLast);
+		expressionLast = expression;
 		if (beforeReactNow) {
 			manageResponseing(false);
 		}
@@ -200,6 +204,7 @@ function SearchQuery() {
 		// 组件卸载时，将chatHistory保存到localStorage
 		return () => {
 			character.saveChatHistory();
+			character.addDeveloperMessage("用户退出了聊天，时间" + format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 		};
 	}, []);
 

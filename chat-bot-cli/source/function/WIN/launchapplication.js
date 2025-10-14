@@ -68,7 +68,8 @@ const description = {
 		toolArgs: {
 			path: {
 				type: 'string',
-				description: '从information中给的列表中选择的路径',
+				description:
+					'从information中给的列表中选择的路径，如果没有符合要求的软件填空字符串，别没找到却打开了其他软件',
 				required: true, // 标识该参数为必填项
 			},
 		},
@@ -95,7 +96,8 @@ async function launchApplication(userDemand) {
 
     let path = undefined;
     let result = undefined;
-    // let message = undefined;
+    let message = "";
+
 
 	for (let i = 0; i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !path; i++) {
 		try {
@@ -103,6 +105,11 @@ async function launchApplication(userDemand) {
 			logger.info(`返回函数参数${response}`);
 
 			const applicationName = JSON.parse(parseJSON(response))?.path;
+			if (applicationName === '') {
+				result = false;
+				message = "没有找到软件，可能是没通过正常途径安装，不是小助手的错误";
+				break;
+			}
 			logger.info(`准备启动应用程序：${applicationName}`);
 			path = nameToPath.get(applicationName);
 			logger.info(`获取到应用程序路径：${path}`);
@@ -124,7 +131,7 @@ async function launchApplication(userDemand) {
     return {
         result: result,
         data: [{arg: "path", value: path}],
-        message: result ? '应用程序启动成功' : '应用程序启动失败',
+        message: (result ? '应用程序启动成功 ' : '应用程序启动失败 ') + message,
     };
 }
 
