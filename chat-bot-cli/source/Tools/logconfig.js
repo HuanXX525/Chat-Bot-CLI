@@ -16,6 +16,7 @@ const logPath = process.env.LOG_PATH || 'log';
 const LOG_PATH = path.join(rootPath, logPath);
 // console.log(LOG_PATH);
 const fileName = `${currentDate}.log`;
+const logFilePath = path.join(LOG_PATH, fileName);
 // console.log(logFilePath);
 const logger = winston.createLogger({
 	level: 'info',
@@ -31,5 +32,21 @@ const logger = winston.createLogger({
 logger.info("env初始化完成");
 logger.info("日志初始化完成");
 
+function getLogFilePath() {
+	// 获取第一个文件传输的路径信息
+	const fileTransport = logger.transports.find(
+		t => t instanceof winston.transports.File,
+	);
+
+	if (fileTransport) {
+		// 获取完整文件路径
+		const fileName = fileTransport.filename;
+		const dirPath = fileTransport.dirname;
+		return path.join(process.env.ROOT_PATH ,dirPath, fileName);
+	}
+
+	return "❌获取日志路径失败，大概率在Log文件夹下";
+}
+
 export default logger;
-export {LOG_PATH};
+export {getLogFilePath};

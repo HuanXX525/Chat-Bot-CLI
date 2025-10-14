@@ -1,32 +1,39 @@
 import {ControlledTextInput} from './input.js';
 import termSize from 'term-size';
-import {ChatBotAgent} from '../Tools/agent.js';
+import {ChatBotAgent, CallToolAgent} from '../Tools/agent.js';
 import ChatBubble from './chatbubble.js';
-import Args from '../Tools/init.js'
+import {consoleError, consoleChat, consoleAction} from './chatbubble.js';
+import Args from '../Tools/init.js';
 import React, {useEffect, useState} from 'react';
 import {Box, Spacer} from 'ink';
-import { Spinner } from '@inkjs/ui';
+import {Spinner} from '@inkjs/ui';
 import logger from '../Tools/logconfig.js';
-import { getDirectSubDirFiles, readTxtFile } from '../Tools/fileio.js';
-import { getRandomInt } from '../Tools/utils.js';
-import boxen from 'boxen';
-import path from 'path';
+import {executeFunction} from '../function/executetoolbot.js';
+
 
 function parseResponse(response) {
-	// 匹配唯一的方括号对，捕获内部内容（非贪婪模式，确保只匹配一对）
-	const regex = /\[([^[\]]*)\]/;
-	// 执行一次匹配
-	const match = response.match(regex);
-	// 提取方括号内的内容（若存在）
-	const bracketContent = match ? match[1] : null;
-	logger.info(`提取到表情：[${bracketContent}]`)
-	// 移除方括号及其内容，得到清理后的文本
-	const cleanText = response.replace(regex, '').trim();
-
-	return {
-		expression: bracketContent, // 单个方括号内的内容（字符串或 null）
-		messages: cleanText.trim().split("$"), // 去掉方括号后的文本
-	};
+	try {
+		// 1. 提取表情
+		const regex = /\[([^[\]]*)\]/;
+		const match = response.match(regex);
+		const bracketContent = match ? match[1] : null;
+		logger.info(`提取到表情：[${bracketContent}]`);
+		// 2. 提取操作
+		let cleanText = response.replace(regex, '').trim();
+		const needTool = cleanText.endsWith('@');
+		if (needTool) {
+			cleanText = cleanText.slice(0, -1);
+			logger.info('检测到需要执行操作');
+		}
+		return {
+			expression: bracketContent, // 单个方括号内的内容（字符串或 null）
+			messages: cleanText.trim().split('$'), // 去掉方括号后的文本
+			needTool: needTool, // 要调用工具
+		};
+	} catch (error) {
+		logger.error('解析ChatBot响应失败', error);
+		return undefined;
+	}
 }
 
 let characterName = Args.flags.character;
@@ -34,8 +41,52 @@ let character = new ChatBotAgent(
 	process.env.DEFAULT_MODULE_NAME,
 	Args.flags.character,
 );
-let expressionLast = "";
+let expressionLast = '';
 
+const callToolBot = new CallToolAgent(process.env.CALL_TOOL_MODULE_NAME);
+/**
+ * 尝试调用工具，直到调用成功或达到最大尝试次数
+ * 一定要注意清除聊天记录
+ * @param {string} userDemand - 用户的需求
+ * @returns {Promise<{result: boolean, data: Array<{arg: string, value: string}>}>} - 调用结果
+ * @example
+ * const result = await callToolFunction('launchApplication', 'Chrome');
+ * console.log(result);
+ * // {
+ * //     result: true,
+ * //     data: [{arg: "path", value: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"}],
+ * // }
+ */
+async function callToolNeedClear(userDemand) {
+	let result = undefined;
+	const userDemandBackUp = userDemand;
+	for (let i = 0; i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !result; i++) {
+		const response = await callToolBot.sendMessage(userDemand);
+		const functionName = JSON.parse(response)?.toolName;
+		if (!functionName) {
+			result = false;
+			break;
+		}
+		logger.info(`准备调用工具：${functionName}`);
+		/** 该警告是因为解释器不知道映射后的函数是否是异步的，但我们要确保映射后的函数是异步即可 */
+		result = await executeFunction(functionName, userDemandBackUp);
+		if (!result.result) {
+			userDemand = result.messages;
+			logger.warn(`调用工具失败，准备重试第${i + 1}次`);
+		}
+	}
+	callToolBot.clearChatHistorySaveSystem();
+	consoleAction(result.result, result.data, result.message);
+
+	return result.result
+		? result
+		: {
+				result: false,
+				data: [],
+				// For character
+				message: '找不到做这个操作的工具，自己还不会',
+		  };
+}
 function SearchQuery() {
 	// 用户输入状态
 	const [userInput, setUserInput] = useState('');
@@ -43,52 +94,73 @@ function SearchQuery() {
 	const [screenSize, setScreenSize] = useState({
 		x: termSize().columns,
 		y: termSize().rows,
-    });
-    // 回复状态
-    const [responseing, setResponseing] = useState(false);
-    let responseingForLogic = false;
-    function manageResponseing(value) {
-        responseingForLogic = value;
-        setResponseing(responseingForLogic);
-    }
+	});
+	// 回复状态
+	const [responseing, setResponseing] = useState(false);
+	let responseingForLogic = false;
+	function manageResponseing(value) {
+		responseingForLogic = value;
+		setResponseing(responseingForLogic);
+	}
+	// 执行状态
+	const [executing, setExecuting] = useState(false);
+	let executingForLogic = false;
+	function manageExecuting(value) {
+		executingForLogic = value;
+		setExecuting(executingForLogic);
+	}
 	// 处理输入确认
-	const handleSubmit =  async submittedValue => {
-		if (submittedValue.trim() === '' || responseingForLogic) {
+	const handleSubmit = async submittedValue => {
+		// 1. 空输入返回
+		if (
+			submittedValue.trim() === '' ||
+			responseingForLogic ||
+			executingForLogic
+		) {
 			return;
 		}
-        setUserInput('');
-        console.log(ChatBubble(submittedValue, true, characterName, true));
-
-        
-        manageResponseing(true);
-        let response = await character.sendMessage(submittedValue);
+		// 更新UI
+		setUserInput('');
+		console.log(ChatBubble(submittedValue, true, characterName, true));
+		// 内容正在生成
+		manageResponseing(true);
+		let response = await character.sendMessage(submittedValue);
+		logger.info(characterName + '响应' + response);
 		manageResponseing(false);
-		// console.log(response)
-		const {expression, messages} = parseResponse(response);
-
-		for (let i = 0; i < messages.length; i++) {
-			manageResponseing(!responseing);
-			const waitTime = messages[i].length * 0.1 * 1000;
-			await new Promise(resolve => setTimeout(resolve, waitTime));
-			console.log(ChatBubble(messages[i], false, characterName, i === 0));
+		// 解析Chat生成内容
+		const result = parseResponse(response);
+		if (!result) {
+			consoleError('解析ChatBot响应失败');
+			return;
 		}
-		/** 打印表情 */
-		try {
-			if (expression !== expressionLast) {
-				await new Promise(resolve => setTimeout(resolve, 1000));
-				const expressionPath = path.join(process.env.ROOT_PATH, "Characters", characterName, "Expression", expression);
-				const files = getDirectSubDirFiles(expressionPath);
-				const expressionIndex = getRandomInt(0, files.length - 1);
-				const expressionFile = path.join(expressionPath, files[expressionIndex]);
-				// console.log(expressionFile);
-				console.log(boxen(readTxtFile(expressionFile).trimEnd(), { borderStyle: "round", title: characterName }));
-				expressionLast = expression;
-			}
-		} catch (error) {
-			logger.error("打印表情失败" + error);
+		const { expression, messages, needTool } = result;
+		let beforeReactNow = true;
+		// 异步执行操作
+		if (needTool) {
+			logger.info('开始执行操作');
+			manageExecuting(true);
+			callToolNeedClear(messages).then(result => {
+				manageExecuting(false);
+				beforeReactNow = false;
+				manageResponseing(true);
+				character.addDeveloperMessage(
+					`操作执行${result.result ? '成功' : '失败'}了${
+						result.message
+					}回应用户，此次回应不需要@`,
+				);
+				character.reactNow().then(response => {
+					logger.info(characterName + '响应' + response);
+					const {expression, messages, _} = parseResponse(response);
+					consoleChat(messages, characterName, expression, expressionLast);
+					manageResponseing(false);
+					beforeReactNow = true;
+				});
+			});
 		}
-
-		manageResponseing(false);
+		// 打印消息
+		await consoleChat(messages, characterName, expression, expressionLast);
+		if (beforeReactNow) { manageResponseing(false); }
+		// manageResponseing(false);
 	};
 	/** 监听窗口尺寸变化 */
 	useEffect(() => {
@@ -107,14 +179,28 @@ function SearchQuery() {
 
 	return (
 		<Box width={screenSize.x * 0.9} flexDirection="column">
-            {responseing && (
-                <Box flexDirection='column'>
-                    <Box borderStyle={"round"} width={20}>
-                        <Spinner label=" 对方打字中..." />
-                    </Box>
-                    <Spacer/>
-                </Box>
-			)}
+			<Box gap={1}>
+				{responseing && (
+					<Box flexDirection="column">
+						<Box borderStyle={'round'}>
+							<Spinner label=" 对方打字中..." />
+						</Box>
+						<Spacer />
+					</Box>
+				)}
+				{executing && (
+					<Box flexDirection="column">
+						<Box
+							borderColor={'yellowBright'}
+							borderStyle={'round'}
+							// width={`${character}尝试执行操作中...`.length + 4}
+						>
+							<Spinner label={`${characterName}尝试执行操作中...`} />
+						</Box>
+						<Spacer />
+					</Box>
+				)}
+			</Box>
 			<ControlledTextInput
 				width={'100%'}
 				value={userInput}

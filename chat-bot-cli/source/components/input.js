@@ -12,7 +12,7 @@ function ControlledTextInput({
 	size = {x: undefined},
 	placeholder = ' ',
 	showCursor = true,
-	minWidth = 80,
+	minWidth = 40,
 	cursorColor = 'black',
 	cursorBackground = 'white',
 	focus = true,
@@ -137,6 +137,7 @@ function ControlledTextInput({
 			if (key.return) {
 				if (canSubmit) {	
 					onSubmit?.(value);
+					setCursor({line: 0, position: 0});
 				}
 				return;
 			}
