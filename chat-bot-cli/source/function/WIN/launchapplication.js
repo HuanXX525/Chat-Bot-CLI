@@ -61,7 +61,7 @@ const nameToPath = new Map(
 // console.log(nameToPath);
 
 const description = {
-	task: '从information中给的列表中选择一个符合用户要求的应用程序',
+	task: '从information中给的列表中选择一个符合用户要求的应用程序，如果有多个，优先选择系统相关的而不是第三方软件的',
 	toolDescription: {
 		name: 'launchapplication',
 		description: '执行你所选择的应用程序',

@@ -32,21 +32,6 @@ function ControlledTextInput({
 		setLines(newLines);
 	}, [value]);
 
-	// 确保光标位置有效
-	// useEffect(() => {
-	// 	const {line, position} = cursor;
-	// 	// console.log('📝 position:', position, "line", line, "lines.length", lines.length);
-	// 	if (line >= lines.length) {
-	// 		// console.log("📝 linechange");
-	// 		setCursor({
-	// 			line: lines.length - 1,
-	// 			position: Math.min(position, lines[lines.length - 1].length),
-	// 		});
-	// 	} else if (position > lines[line].length) {
-	// 		setCursor({line, position: lines[line].length});
-	// 	}
-	// }, [lines, cursor]);
-
 	useInput(
 		(input, key) => {
 			if (!focus) return;
@@ -292,10 +277,11 @@ function ControlledTextInput({
 				<Box flexDirection="column">{renderContent()}</Box>
 			</Box>
 			<Text>
-				({chalk.red('Ctrl+N换行')} |{ canSubmit?chalk.green('Enter提交'):chalk.gray('Enter提交')}|{' '}
-				{chalk.blue('↑↓←→ 移动')} | {chalk.blue('Ctrl+A全选')}) | 行：
+				({chalk.red('Ctrl+N 换行')} |
+				{canSubmit ? chalk.green('Enter 提交') : chalk.gray('Enter 提交')}|{' '}
+				{chalk.blue('↑↓←→ 移动')} | {chalk.blue('Ctrl+A 全选')}|{' '}
+				{chalk.red('Ctrl+C 退出')}) | 行：
 				{cursor.line} | 位置: {cursor.position} | 最大行数：{maxLines}
-				{/* 全选：{allSel ? '是' : '否'} */}
 			</Text>
 		</Box>
 	);

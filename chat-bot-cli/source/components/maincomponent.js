@@ -10,7 +10,6 @@ import {Spinner} from '@inkjs/ui';
 import logger from '../Tools/logconfig.js';
 import {executeFunction} from '../function/executetoolbot.js';
 
-
 function parseResponse(response) {
 	try {
 		// 1. 提取表情
@@ -41,6 +40,12 @@ let character = new ChatBotAgent(
 	process.env.DEFAULT_MODULE_NAME,
 	Args.flags.character,
 );
+try {
+	character.loadChatHistory();
+}catch (error) {
+	logger.error('加载聊天记录失败，可能是第一次使用角色', error);
+}
+
 let expressionLast = '';
 
 const callToolBot = new CallToolAgent(process.env.CALL_TOOL_MODULE_NAME);
@@ -60,7 +65,11 @@ const callToolBot = new CallToolAgent(process.env.CALL_TOOL_MODULE_NAME);
 async function callToolNeedClear(userDemand) {
 	let result = undefined;
 	const userDemandBackUp = userDemand;
-	for (let i = 0; i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !result; i++) {
+	for (
+		let i = 0;
+		i < Number(process.env.TOOL_MAX_RETRY_TIMES) && !result;
+		i++
+	) {
 		const response = await callToolBot.sendMessage(userDemand);
 		const functionName = JSON.parse(response)?.toolName;
 		if (!functionName) {
@@ -101,6 +110,7 @@ function SearchQuery() {
 	function manageResponseing(value) {
 		responseingForLogic = value;
 		setResponseing(responseingForLogic);
+		// console.log("设置responseing",responseingForLogic);
 	}
 	// 执行状态
 	const [executing, setExecuting] = useState(false);
@@ -133,7 +143,7 @@ function SearchQuery() {
 			consoleError('解析ChatBot响应失败');
 			return;
 		}
-		const { expression, messages, needTool } = result;
+		const {expression, messages, needTool} = result;
 		let beforeReactNow = true;
 		// 异步执行操作
 		if (needTool) {
@@ -148,18 +158,27 @@ function SearchQuery() {
 						result.message
 					}回应用户，此次回应不需要@`,
 				);
-				character.reactNow().then(response => {
+				character.reactNow().then(async response => {
 					logger.info(characterName + '响应' + response);
 					const {expression, messages, _} = parseResponse(response);
-					consoleChat(messages, characterName, expression, expressionLast);
-					manageResponseing(false);
+					await consoleChat(
+						messages,
+						characterName,
+						expression,
+						expressionLast,
+					);
 					beforeReactNow = true;
+					// console.log("GERE");
+					manageResponseing(false);
 				});
 			});
 		}
 		// 打印消息
+		manageResponseing(true);
 		await consoleChat(messages, characterName, expression, expressionLast);
-		if (beforeReactNow) { manageResponseing(false); }
+		if (beforeReactNow) {
+			manageResponseing(false);
+		}
 		// manageResponseing(false);
 	};
 	/** 监听窗口尺寸变化 */
@@ -174,6 +193,13 @@ function SearchQuery() {
 
 		return () => {
 			process.stdout.off('resize', handleScreenSizeChange);
+		};
+	}, []);
+	/** 保存历史记录 */
+	useEffect(() => {
+		// 组件卸载时，将chatHistory保存到localStorage
+		return () => {
+			character.saveChatHistory();
 		};
 	}, []);
 

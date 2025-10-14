@@ -1,15 +1,19 @@
 import { ExecuteToolAgent } from "../Tools/agent.js";
 import logger from "../Tools/logconfig.js";
 import launchApplication from "./WIN/launchapplication.js";
-
+import openUrlInDefaultBrowser from "./WIN/openwebsite.js";
 const nameToFunction = new Map();
 function registerFunction(name, func) {
 	logger.info("注册函数:" + name);
 	nameToFunction.set(name, func);
 }
-
+// 注册工具函数
 registerFunction("launchApplication", launchApplication);
+registerFunction("openUrlInDefaultBrowser", openUrlInDefaultBrowser);
 
+
+
+// 注册工具函数
 const executeToolBot = new ExecuteToolAgent(
 	process.env.TOOL_EXECUTE_MODULE_NAME
 );
@@ -46,9 +50,12 @@ function parseJSON(string){
  * // }
  */
 async function executeFunction(name, userDemand) {
+	// console.log('ENTER executeFunction');
 	const func = nameToFunction.get(name);
+	// logger.info(name + ":" + func)
 	if (func) {
-		try{
+		try {
+			logger.info("执行" + name);
 			return await func(userDemand);
 		} catch (err) {
 			logger.error("执行" + name + "失败", err);
