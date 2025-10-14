@@ -101,7 +101,10 @@ async function openUrlInDefaultBrowser(userDemand) {
                 }
             }
         } catch (error) {
-            logger.error(`执行openUrlInDefaultBrowser失败`, error);
+            logger.error(
+							`执行openUrlInDefaultBrowser失败`,
+							error.code + error.stack,
+						);
             result = {
                 result: false,
                 data : [],

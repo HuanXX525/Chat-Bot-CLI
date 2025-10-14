@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import logger from './logconfig.js';
 
 const client = new OpenAI({
     apiKey: process.env['OPENAI_API_KEY'],
@@ -30,7 +31,8 @@ class Agent{
             // console.log(response.error);
             return response?.choices[0]?.message?.content;
         } catch (error) {
-            console.log(error);
+            // console.log(error);
+            logger.error(error.code + error.stack);
         }
     }
 }

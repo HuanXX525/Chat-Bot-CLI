@@ -55,10 +55,10 @@ async function executeFunction(name, userDemand) {
 	// logger.info(name + ":" + func)
 	if (func) {
 		try {
-			logger.info("执行" + name);
+			logger.info('执行' + name);
 			return await func(userDemand);
-		} catch (err) {
-			logger.error("执行" + name + "失败", err);
+		} catch (error) {
+			logger.error('执行' + name + '失败', error.code + error.stack);
 			executeToolBot.clearChatHistorySaveSystem();
 		}
 	} else {

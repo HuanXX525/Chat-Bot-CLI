@@ -9,8 +9,8 @@ const readJsonFile = filePath => {
 	try {
 		const jsonString = fs.readFileSync(filePath, 'utf8');
 		return JSON.parse(jsonString);
-	} catch (err) {
-		logger.error('同步读取失败:', err);
+	} catch (error) {
+		logger.error('同步读取失败:', error.code + error.stack);
 		return undefined;
 	}
 };
@@ -18,8 +18,8 @@ const readJsonFile = filePath => {
 const readTxtFile = filePath => {
 	try {
 		return fs.readFileSync(filePath, 'utf8');
-	} catch (err) {
-		logger.error('同步读取失败:', err);
+	} catch (error) {
+		logger.error('同步读取失败:', error.code + error.stack);
 		return undefined;
 	}
 };

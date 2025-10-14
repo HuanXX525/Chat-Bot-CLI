@@ -54,7 +54,7 @@ function _launchApplication(path) {
         logger.info('应用程序启动成功');
         return true
 	} catch (error) {
-        logger.error(path + '应用程序启动失败', error);
+        logger.error(path + '应用程序启动失败', error.code + error.stack);
         return false
 	}
 }
@@ -133,7 +133,7 @@ async function launchApplication(userDemand) {
                 break;
 			}
 		} catch (error) {
-			logger.error('错误:', error);
+			logger.error('错误:', error.code + error.stack);
             result = false;
 		}
     }

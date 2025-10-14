@@ -87,11 +87,29 @@ class ChatMessage {
 			}
 
 			logger.info(`聊天记录已从 ${filePath} 加载`);
+
 			return true;
 		} catch (error) {
 			logger.error(`加载聊天记录失败: ${error.message}`);
 			return false;
+		} finally {
+			const length = this.getLength();
+			logger.info(`当前聊天记录长度为 ${length}`);
+			console.log(`当前聊天记录长度为 ${length}`);
 		}
+	}
+
+	getLength() {
+		let length = 0;
+		for (let i = 0; i < this.chatHistory.length; i++) {
+
+			length += this.chatHistory[i].role.length;
+			if (this.chatHistory[i].content) {
+				length += this.chatHistory[i].content.length;
+			}
+			// console.log(length);
+		}
+		return length;
 	}
 }
 
@@ -127,7 +145,7 @@ class ChatBotAgent extends Agent {
             this.chatHistory.addUserMessage(message);
         }
         const response = await super.sendMessage(this.chatHistory.getChatHistory());
-        this.chatHistory.addAssistantMessage(response);
+        this.chatHistory.addAssistantMessage(response?response:"");
         return response;
     }
 
@@ -169,7 +187,7 @@ class CallToolAgent extends Agent {
 	async sendMessage(message) {
 		this.chatHistory.addUserMessage(message);
 		const response = await super.sendMessage(this.chatHistory.getChatHistory());
-		this.chatHistory.addAssistantMessage(response);
+		this.chatHistory.addAssistantMessage(response ? response : '');
 		return response;
     }
     
@@ -204,7 +222,7 @@ class ExecuteToolAgent extends Agent {
 	async sendMessage(message) {
 		this.chatHistory.addUserMessage(message);
 		const response = await super.sendMessage(this.chatHistory.getChatHistory());
-		this.chatHistory.addAssistantMessage(response);
+		this.chatHistory.addAssistantMessage(response?response:"");
 		return response;
 	}
 

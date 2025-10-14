@@ -13,6 +13,15 @@ import {format} from 'date-fns';
 
 
 function parseResponse(response) {
+	if (!response) {
+		logger.error('ChatBot响应为空');
+		consoleError('ChatBot响应为空');
+		return {
+			expression: undefined,
+			messages: ["false"],
+			needTool: false,
+		};
+	}
 	try {
 		// 1. 提取表情
 		const regex = /\[([^[\]]*)\]/;
@@ -32,7 +41,7 @@ function parseResponse(response) {
 			needTool: needTool, // 要调用工具
 		};
 	} catch (error) {
-		logger.error('解析ChatBot响应失败', error);
+		logger.error('解析ChatBot响应失败', error.code + error.stack);
 		return undefined;
 	}
 }
@@ -45,7 +54,10 @@ let character = new ChatBotAgent(
 try {
 	character.loadChatHistory();
 }catch (error) {
-	logger.error('加载聊天记录失败，可能是第一次使用角色', error);
+	logger.error(
+		'加载聊天记录失败，可能是第一次使用角色',
+		error.code + error.stack,
+	);
 }
 
 let expressionLast = '';
@@ -145,7 +157,10 @@ function SearchQuery() {
 			consoleError('解析ChatBot响应失败');
 			return;
 		}
-		const {expression, messages, needTool} = result;
+		const { expression, messages, needTool } = result;
+		if (messages[0] === 'false') {
+			return;
+		}
 		let beforeReactNow = true;
 		// 异步执行操作
 		if (needTool) {
@@ -162,7 +177,10 @@ function SearchQuery() {
 				);
 				character.reactNow().then(async response => {
 					logger.info(characterName + '响应' + response);
-					const {expression, messages, _} = parseResponse(response);
+					const { expression, messages, _ } = parseResponse(response);
+					if (messages[0] === 'false') {
+						return;
+					}
 					await consoleChat(
 						messages,
 						characterName,
