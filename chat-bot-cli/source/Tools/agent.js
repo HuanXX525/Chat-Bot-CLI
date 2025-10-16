@@ -170,6 +170,7 @@ class ChatBotAgent extends Agent {
 class CallToolAgent extends Agent {
 	constructor(modelName) {
 		super(modelName);
+		this.times = 0;
 		/** 规则配置 */
 		const chatConfig = readJsonFile(
 			path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
@@ -185,9 +186,14 @@ class CallToolAgent extends Agent {
 	}
 
 	async sendMessage(message) {
+		this.times++;
 		this.chatHistory.addUserMessage(message);
 		const response = await super.sendMessage(this.chatHistory.getChatHistory());
 		this.chatHistory.addAssistantMessage(response ? response : '');
+		if (this.times > 5) {
+			this.clearChatHistorySaveSystem();
+			this.times = 0;
+		}
 		return response;
     }
     

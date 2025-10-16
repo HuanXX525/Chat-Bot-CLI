@@ -1,4 +1,9 @@
 import meow from 'meow';
+import { readJsonFile } from './fileio.js';
+import path from 'path';
+export const configJSON = readJsonFile(path.join(process.env.ROOT_PATH, 'ChatConfig.json'));
+
+
 
 const Args = meow(
 	`

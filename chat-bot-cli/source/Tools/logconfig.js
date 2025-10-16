@@ -2,9 +2,11 @@ import winston from "winston"
 import {format} from 'date-fns';
 import path from "path";
 import dotenv from 'dotenv';
+dotenv.config({path: ["D:/Desktop/FILE/ChatBot/chat-bot-cli/.env"]});
 import { log } from "console";
+// import {readJsonFile} from './fileio.js';
+
 /** Init as early as possible */
-dotenv.config();
 
 // 获取当前时间并格式化为YYYY-MM-DD格式
 const currentDate = format(new Date(), 'yyyy-MM-dd-HH-mm');

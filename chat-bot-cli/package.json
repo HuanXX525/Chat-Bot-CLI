@@ -19,6 +19,7 @@
 		"@inkjs/ui": "^2.0.0",
 		"@msgpack/msgpack": "^3.1.2",
 		"boxen": "^8.0.1",
+		"cheerio": "^1.1.2",
 		"date-fns": "^4.1.0",
 		"dotenv": "^17.2.3",
 		"ink": "^6.3.1",

@@ -98,7 +98,7 @@ async function callToolNeedClear(userDemand) {
 			logger.warn(`调用工具失败，准备重试第${i + 1}次`);
 		}
 	}
-	callToolBot.clearChatHistorySaveSystem();
+	// callToolBot.clearChatHistorySaveSystem();
 	consoleAction(result.result, result.data, result.message);
 
 	return result.result
@@ -179,6 +179,7 @@ function SearchQuery() {
 					logger.info(characterName + '响应' + response);
 					const { expression, messages, _ } = parseResponse(response);
 					if (messages[0] === 'false') {
+						manageResponseing(false);
 						return;
 					}
 					await consoleChat(

@@ -7,5 +7,7 @@
 
     "Tools":["launchApplication", "openUrlInDefaultBrowser"],
 
-    "ApplicationScanDir" : ["C:/Users/shy27/AppData/Roaming/Microsoft/Windows/Start Menu/Programs", "C:/ProgramData/Microsoft/Windows/Start Menu/Programs"]
+    "ApplicationScanDir" : ["C:/Users/shy27/AppData/Roaming/Microsoft/Windows/Start Menu/Programs", "C:/ProgramData/Microsoft/Windows/Start Menu/Programs"],
+
+    "BrowserFavouritePath" : ["D:/Desktop/FILE/ChatBot/chat-bot-cli/Project/data/favorites.html"]
 }

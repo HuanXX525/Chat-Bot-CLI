@@ -54,7 +54,7 @@ async function consoleChat(messages, characterName, expression, expressionLast) 
 		// manageResponseing(!responseing);
 		const waitTime = messages[i].length * 0.1 * 1000;
 		await new Promise(resolve => setTimeout(resolve, waitTime));
-		console.log(ChatBubble(messages[i], false, characterName, i === 0));
+		console.log(ChatBubble(messages[i], false, characterName, !i));
 	}
 }
 
