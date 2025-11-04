@@ -7,7 +7,7 @@
 
     "ChatHistorySummaryPrompt":"上面的聊天内容是用户和助手的聊天记录，现在聊天记录太长了，你需要总结上面的聊天内容，能够让助手通过你的总结回忆起以前聊天的关键信息，直接返回总结的内容即可",
 
-    "Tools":["launchApplication", "openUrlInDefaultBrowser"],
+    "Tools":["launchApplication", "openUrlInDefaultBrowserIncludeFavourite"],
 
     "ApplicationScanDir" : ["C:/Users/shy27/AppData/Roaming/Microsoft/Windows/Start Menu/Programs", "C:/ProgramData/Microsoft/Windows/Start Menu/Programs"],
 

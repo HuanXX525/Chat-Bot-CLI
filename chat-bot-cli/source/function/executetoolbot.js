@@ -1,7 +1,7 @@
 import { ExecuteToolAgent } from "../Tools/agent.js";
 import logger from "../Tools/logconfig.js";
 import launchApplication from "./WIN/launchapplication.js";
-import openUrlInDefaultBrowser from "./WIN/openwebsite.js";
+import openUrlInDefaultBrowserIncludeFavourite from "./WIN/openwebsite.js";
 const nameToFunction = new Map();
 function registerFunction(name, func) {
 	logger.info("注册函数:" + name);
@@ -9,7 +9,10 @@ function registerFunction(name, func) {
 }
 // 注册工具函数
 registerFunction("launchApplication", launchApplication);
-registerFunction("openUrlInDefaultBrowser", openUrlInDefaultBrowser);
+registerFunction(
+	'openUrlInDefaultBrowserIncludeFavourite',
+	openUrlInDefaultBrowserIncludeFavourite,
+);
 
 
 

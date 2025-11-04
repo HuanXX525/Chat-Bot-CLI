@@ -82,13 +82,13 @@ const informationStr = Array.from(information.entries()).map(([key, value]) => `
 const description = {
 	task: '返回一个符合用户要求的网址，information中有用户的收藏夹网址，不要一昧的选择收藏夹中的网站，必须较为严格匹配收藏夹的NAME才能选择，否则必须你来生成一个符合要求的网址',
 	toolDescription: {
-		name: 'openUrlInDefaultBrowser',
+		name: 'openUrlInDefaultBrowserIncludeFavourite',
 		description: '使用默认浏览器打开你给的网址',
 		toolArgs: {
 			url: {
 				type: 'string',
 				description: '联网搜索或根据你知道的给出符合用户要求的网址',
-				required: true
+				required: true,
 			},
 		},
 	},
@@ -111,7 +111,7 @@ const description = {
  * //     message: "网页https://www.google.com打开成功"
  * // }
  */
-async function openUrlInDefaultBrowser(userDemand) {
+async function openUrlInDefaultBrowserIncludeFavourite(userDemand) {
     logger.info(`User demand: ${userDemand}`);
     executeToolBot.addToolDescription(JSON.stringify(description));
 
@@ -158,4 +158,4 @@ async function openUrlInDefaultBrowser(userDemand) {
     return result;
 }
 
-export default openUrlInDefaultBrowser;
+export default openUrlInDefaultBrowserIncludeFavourite;

@@ -92,12 +92,15 @@ async function callToolNeedClear(userDemand) {
 		const functionName = JSON.parse(response)?.toolName;
 		if (!functionName) {
 			result = false;
+			console.warn("未能找到合适的工具来执行操作");
+			character.chatHistory.addDeveloperMessage('未能找到合适的工具来执行用户操作');
+			consoleAction(false, undefined, '未能找到合适的工具来执行操作');
 			break;
 		}
 		logger.info(`准备调用工具：${functionName}`);
 		/** 该警告是因为解释器不知道映射后的函数是否是异步的，但我们要确保映射后的函数是异步即可 */
 		result = await executeFunction(functionName, userDemandBackUp);
-		if (!result.result) {
+		if (!result?.result) {
 			userDemand = result.messages;
 			logger.warn(`调用工具失败，准备重试第${i + 1}次`);
 		}

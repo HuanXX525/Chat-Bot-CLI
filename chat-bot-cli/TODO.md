@@ -4,3 +4,4 @@
     > [!WARNING] 未测试完成
 - 增加GUI设置功能ACTIVE：
     > [!NOTE] 正在开发
+- 为CallToolAGENT增加函数功能描述
