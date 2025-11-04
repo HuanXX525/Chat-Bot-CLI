@@ -53,6 +53,7 @@ let character = new ChatBotAgent(
 );
 try {
 	character.loadChatHistory();
+	// character.reactNow();
 }catch (error) {
 	logger.error(
 		'加载聊天记录失败，可能是第一次使用角色',
@@ -77,6 +78,9 @@ const callToolBot = new CallToolAgent(process.env.CALL_TOOL_MODULE_NAME);
  * // }
  */
 async function callToolNeedClear(userDemand) {
+
+
+
 	let result = undefined;
 	const userDemandBackUp = userDemand;
 	for (
@@ -133,22 +137,15 @@ function SearchQuery() {
 		executingForLogic = value;
 		setExecuting(executingForLogic);
 	}
-	// 处理输入确认
-	const handleSubmit = async submittedValue => {
-		// 1. 空输入返回
-		if (
-			submittedValue.trim() === '' ||
-			responseingForLogic ||
-			executingForLogic
-		) {
-			return;
+	// 
+	async function callDialog(message = '', tempMessage = '', needToolHand = true) {
+		if (message !== '') {
+			console.log(ChatBubble(message, true, characterName, true));
 		}
-		// 更新UI
-		setUserInput('');
-		console.log(ChatBubble(submittedValue, true, characterName, true));
+
 		// 内容正在生成
 		manageResponseing(true);
-		let response = await character.sendMessage(submittedValue);
+		let response = await character.sendMessage(message, tempMessage);
 		logger.info(characterName + '响应' + response);
 		manageResponseing(false);
 		// 解析Chat生成内容
@@ -163,36 +160,21 @@ function SearchQuery() {
 		}
 		let beforeReactNow = true;
 		// 异步执行操作
-		if (needTool) {
+		if (needTool && needToolHand) {
 			logger.info('开始执行操作');
 			manageExecuting(true);
-			callToolNeedClear(messages).then(result => {
+			callToolNeedClear("user:" + message + '\n' + " bot:" + messages.join('\n')).then(async result => {
 				manageExecuting(false);
 				beforeReactNow = false;
 				manageResponseing(true);
-				character.addDeveloperMessage(
+				await callDialog(
+					'',
 					`操作执行${result.result ? '成功' : '失败'}了${
 						result.message
 					}回应用户，此次回应不需要@`,
-				);
-				character.reactNow().then(async response => {
-					logger.info(characterName + '响应' + response);
-					const { expression, messages, _ } = parseResponse(response);
-					if (messages[0] === 'false') {
-						manageResponseing(false);
-						return;
-					}
-					await consoleChat(
-						messages,
-						characterName,
-						expression,
-						expressionLast,
-					);
-					expressionLast = expression;
-					beforeReactNow = true;
-					// console.log("GERE");
-					manageResponseing(false);
-				});
+					false);
+				manageResponseing(false);
+				beforeReactNow = true;
 			});
 		}
 		// 打印消息
@@ -202,7 +184,21 @@ function SearchQuery() {
 		if (beforeReactNow) {
 			manageResponseing(false);
 		}
-		// manageResponseing(false);
+	}
+	// 初始化问候
+	// 处理输入确认
+	const handleSubmit = async submittedValue => {
+		// 1. 空输入返回
+		if (
+			submittedValue.trim() === '' ||
+			responseingForLogic ||
+			executingForLogic
+		) {
+			return;
+		}
+		// 更新UI
+		setUserInput('');
+		callDialog(submittedValue);
 	};
 	/** 监听窗口尺寸变化 */
 	useEffect(() => {
@@ -225,6 +221,16 @@ function SearchQuery() {
 			character.saveChatHistory();
 			character.addDeveloperMessage("用户退出了聊天，时间" + format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 		};
+	}, []);
+
+	useEffect(() => {
+		// 组件装载后执行某个操作
+		function afterMount() {
+			// TODO: 在这里执行某个操作
+			callDialog('', '用户已进入聊天，请你做出回应，不要每次都回复一样的话，可以自己创造一些', false);
+		}
+		// 只在组件装载后执行一次
+		afterMount();
 	}, []);
 
 	return (
@@ -262,6 +268,7 @@ function SearchQuery() {
 				size={screenSize}
 				canSubmit={!responseing}
 			/>
+			{/* ({Init()}) */}
 		</Box>
 	);
 }

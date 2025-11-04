@@ -52,7 +52,7 @@ async function consoleChat(messages, characterName, expression, expressionLast) 
 	// 打印聊天内容
 	for (let i = 0; i < messages.length; i++) {
 		// manageResponseing(!responseing);
-		const waitTime = messages[i].length * 0.1 * 1000;
+		const waitTime = messages[i].length * 0.05 * 1000;
 		await new Promise(resolve => setTimeout(resolve, waitTime));
 		console.log(ChatBubble(messages[i], false, characterName, !i));
 	}

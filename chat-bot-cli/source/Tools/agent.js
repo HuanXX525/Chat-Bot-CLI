@@ -6,6 +6,10 @@ import fs from "fs";
 import { assert } from "console";
 import msgpack from "@msgpack/msgpack";
 import { format } from "date-fns";
+import Args from "./init.js";
+
+const AgentForChatMessage = new Agent(process.env.CHAT_HISTORY_SUMMARY_AGENT);
+const chatConfig = readJsonFile(path.join(process.env.ROOT_PATH, 'ChatConfig.json'));
 
 class ChatMessage {
 	/**
@@ -13,7 +17,7 @@ class ChatMessage {
 	 * @param {string} systemContent - Initial system message
 	 * @param {number} [maxByteConstraint=3000] - Maximum byte size of chat history messages
 	 */
-	constructor(systemContent = '', maxByteConstraint = 3000) {
+	constructor(systemContent = '', maxByteConstraint = Args.flags.maxHistoryLength) {
 		if (systemContent === '') {
 			this.chatHistory = [];
 		} else {
@@ -21,14 +25,17 @@ class ChatMessage {
 		}
 		this.chatHistoryRestriction = maxByteConstraint;
 		this.systemContentIndex = 0;
+		this.lengthChar = 0;
 		logger.info('消息初始化完成');
 	}
 
 	addUserMessage(userContent) {
+		this.lengthChar += userContent.length;
 		this.chatHistory.push({role: 'user', content: userContent});
 	}
 
 	addAssistantMessage(assistantContent) {
+		this.lengthChar += assistantContent.length;
 		this.chatHistory.push({role: 'assistant', content: assistantContent});
 	}
 
@@ -37,9 +44,11 @@ class ChatMessage {
 	}
 
 	addDeveloperMessage(message) {
+		const content = '[Developer Message]' + message;
+		this.lengthChar += content.length;
 		this.chatHistory.push({
 			role: 'user',
-			content: '[Developer Message]' + message,
+			content: content,
 		});
 	}
 
@@ -58,7 +67,7 @@ class ChatMessage {
 			// 同步写入文件（无回调，直接阻塞直到完成）
 			fs.writeFileSync(filePath, binaryData);
 
-			logger.info(`聊天记录已保存到 ${filePath}`);
+			logger.info(`聊天记录已保存到 ${filePath}， 长度为 ${this.lengthChar}`);
 			return true;
 		} catch (error) {
 			logger.error(`保存聊天记录失败: ${error.message}`);
@@ -87,15 +96,24 @@ class ChatMessage {
 			}
 
 			logger.info(`聊天记录已从 ${filePath} 加载`);
-
+			const length = this.getLength();
+			this.lengthChar = length;
+			consoleAction(
+				true,
+				[{arg: '聊天记录长度', value: length}],
+				`聊天记录已从 ${filePath} 加载`,
+			);
 			return true;
 		} catch (error) {
-			logger.error(`加载聊天记录失败: ${error.message}`);
-			return false;
-		} finally {
 			const length = this.getLength();
-			logger.info(`当前聊天记录长度为 ${length}`);
-			console.log(`当前聊天记录长度为 ${length}`);
+			if(error.code === 'ENOENT') {
+				consoleAction(true, [{ arg: '目前聊天记录长度', value: length }], `加载聊天记录失败: ${error.message}\n已创建新的聊天记录文件`);
+				return true;
+			}
+			logger.error(`加载聊天记录失败: ${error.message}`);
+			consoleAction(false, [{arg: '目前聊天记录长度', value: length}], `加载聊天记录失败: ${error.message}\n`);
+			return false;
+
 		}
 	}
 
@@ -111,10 +129,40 @@ class ChatMessage {
 		}
 		return length;
 	}
+
+	/**
+	 * 异步获取聊天记录长度
+	 * @returns 
+	 */
+	async getLengthAsync() { 
+		let length = 0;
+		for (let i = 0; i < this.chatHistory.length; i++) {
+			await new Promise(resolve => setTimeout(resolve, 1));
+			length += this.chatHistory[i].role.length;
+			if (this.chatHistory[i].content) {
+				length += this.chatHistory[i].content.length;
+			}
+		}
+		return length;
+	}
+
+	async summaryHistoryIfOverflow() {
+		const length = this.lengthChar;
+
+		if (length > this.chatHistoryRestriction) {
+			const summaryLength = Args.flags.summaryLength;
+			const sliceIndex = this.chatHistory.length > summaryLength ? summaryLength : this.chatHistory.length - 1;
+			const needToSummary = this.chatHistory.slice(1, sliceIndex);
+			needToSummary.push({ role: 'system', content: chatConfig?.summaryInstruction });
+			const response = await AgentForChatMessage.sendMessage(needToSummary);
+			this.chatHistory = [this.chatHistory[0], { role: 'user', content: '[Summary]' + response }, ...this.chatHistory.slice(sliceIndex, this.chatHistory.length > summaryLength ? summaryLength : this.chatHistory.length - 1)];
+		}
+	}
 }
 
 
-
+import {consoleAction} from "../components/chatbubble.js";
+import { th } from "date-fns/locale";
 class ChatBotAgent extends Agent {
     constructor(modelName, characterName) {
         super(modelName);
@@ -123,7 +171,6 @@ class ChatBotAgent extends Agent {
             assert(false, "角色" + characterName + "不存在 \n✨Tip：提供正确的角色名称");
         }
         /** 规则配置 */        
-        const chatConfig = readJsonFile(path.join(process.env.ROOT_PATH, 'ChatConfig.json'));
         this.instructions = chatConfig?.AgentSetting; 
         logger.info(`[ChatBot]规则配置加载完成`);
         /** 表情 */
@@ -138,14 +185,22 @@ class ChatBotAgent extends Agent {
         /** 创建聊天信息 */
         this.chatHistory = new ChatMessage(this.instructions);
         logger.info('[ChatBot]Agent' + characterName + '初始化完成');
+		consoleAction(true, [], "Agent" + characterName + "初始化完成");
     }
 
-    async sendMessage(message = "") {
+    async sendMessage(message = "", tempMessage = "") {
         if (message !== "") {
             this.chatHistory.addUserMessage(message);
         }
-        const response = await super.sendMessage(this.chatHistory.getChatHistory());
-        this.chatHistory.addAssistantMessage(response?response:"");
+    	if (tempMessage !== '') {
+			this.chatHistory.addUserMessage('[developer]' + tempMessage);
+		}
+		const response = await super.sendMessage(this.chatHistory.getChatHistory());
+		if (tempMessage !== '') {
+			this.chatHistory.getChatHistory().pop();
+		}
+		this.chatHistory.addAssistantMessage(response ? response : "");
+		this.chatHistory.summaryHistoryIfOverflow();
         return response;
     }
 
@@ -172,9 +227,9 @@ class CallToolAgent extends Agent {
 		super(modelName);
 		this.times = 0;
 		/** 规则配置 */
-		const chatConfig = readJsonFile(
-			path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
-		);
+		// const chatConfig = readJsonFile(
+		// 	path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
+		// );
 		this.instructions = chatConfig?.CallToolAgentSetting;
 		logger.info(`[CallToolBot]规则配置加载完成`);
 		/** 工具描述 */
@@ -206,9 +261,9 @@ class ExecuteToolAgent extends Agent {
 	constructor(modelName) {
 		super(modelName);
 		/** 规则配置 */
-		const chatConfig = readJsonFile(
-			path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
-		);
+		// const chatConfig = readJsonFile(
+		// 	path.join(process.env.ROOT_PATH, 'ChatConfig.json'),
+		// );
 		this.instructions = chatConfig?.ExecuteToolAgentSetting;
         logger.info(`[ExecuteToolBot]规则配置加载完成`);
 	}

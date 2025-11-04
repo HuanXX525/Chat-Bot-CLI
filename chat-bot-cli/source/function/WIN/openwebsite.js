@@ -6,6 +6,7 @@ import { parseJSON } from '../executetoolbot.js';
 import executeToolBot from '../executetoolbot.js';
 import fs from 'fs';
 import { json } from 'stream/consumers';
+import { log } from 'console';
 function readFavourite(htmlPath) {
 	// 读取 HTML 文件内容
 	const htmlContent = fs.readFileSync(htmlPath, 'utf8'); // 替换为你的 HTML 文件路径
@@ -57,7 +58,7 @@ function _openUrlInDefaultBrowser(url) {
 
 	try {
 		execSync(command);
-        logger.info('应用程序启动成功');
+        // logger.info('应用程序启动成功');
         result.result = true;
         result.message = `网页${url}打开成功`;
         logger.info('网页打开成功');
@@ -79,7 +80,7 @@ function _openUrlInDefaultBrowser(url) {
 const informationStr = Array.from(information.entries()).map(([key, value]) => `URL[${key}] NAME[${value}]`).join('\n');
 
 const description = {
-	task: '返回一个符合用户要求的网址，如果有多个，优先选择官网主页，information中有用户的收藏夹网址',
+	task: '返回一个符合用户要求的网址，information中有用户的收藏夹网址，不要一昧的选择收藏夹中的网站，必须较为严格匹配收藏夹的NAME才能选择，否则必须你来生成一个符合要求的网址',
 	toolDescription: {
 		name: 'openUrlInDefaultBrowser',
 		description: '使用默认浏览器打开你给的网址',
@@ -111,6 +112,7 @@ const description = {
  * // }
  */
 async function openUrlInDefaultBrowser(userDemand) {
+    logger.info(`User demand: ${userDemand}`);
     executeToolBot.addToolDescription(JSON.stringify(description));
 
     let url = undefined;

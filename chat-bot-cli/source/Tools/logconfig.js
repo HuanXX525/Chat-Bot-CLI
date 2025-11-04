@@ -3,7 +3,7 @@ import {format} from 'date-fns';
 import path from "path";
 import dotenv from 'dotenv';
 dotenv.config({path: ["D:/Desktop/FILE/ChatBot/chat-bot-cli/.env"]});
-import { log } from "console";
+// import { log } from "console";
 // import {readJsonFile} from './fileio.js';
 
 /** Init as early as possible */
