@@ -17,9 +17,9 @@ try {
 		`ROOT_PATH=${path.join(__dirname, '../../Project')}`,
 	);
 	fs.writeFileSync(envPath, updatedData, 'utf8');
-	console.log('.env 文件修改成功');
+	console.log('[.env]成功配置项目根目录');
 } catch (err) {
-	console.error('修改 .env 失败：', err);
+	console.error('[.env]：项目根目录配置失败', err);
 }
 
 
@@ -66,7 +66,7 @@ function getLogFilePath() {
 		// 获取完整文件路径
 		const fileName = fileTransport.filename;
 		const dirPath = fileTransport.dirname;
-		return path.join(process.env.ROOT_PATH ,dirPath, fileName);
+		return path.join(dirPath, fileName);
 	}
 
 	return "❌获取日志路径失败，大概率在Log文件夹下";
