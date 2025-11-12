@@ -54,7 +54,7 @@ const logger = winston.createLogger({
 	],
 });
 console.log(`日志文件路径：${logFilePath}`)
-console.log("使用--help查看帮助信息")
+console.log("\n使用--help查看帮助信息\n")
 logger.info("env初始化完成");
 logger.info("日志初始化完成");
 

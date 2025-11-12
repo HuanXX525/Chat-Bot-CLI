@@ -7,16 +7,19 @@
 ```bash
 # 克隆项目
 git clone <项目地址>
-cd chat-bot-cli
 
-# 安装依赖
+npm install
+# 进入 chat-bot-cli 目录安装依赖
+cd chat-bot-cli
 npm install
 
 # 构建项目
 npm run build
 
-# 全局安装（可选）
+# 如果想在任意位置运行
 npm install -g
+chat-bot-cli
+
 ```
 
 ## 首次使用配置
