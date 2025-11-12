@@ -15,6 +15,7 @@ const Args = meow(
 	  --restoreChatHistory, -r  是否恢复聊天记录，默认不恢复，不能完全恢复（操作结果会丢失）
 	  --maxHistoryLength, -l  最大聊天记录长度，默认20000，单位为字符（非tokens）
 	  --summaryLength, -s  历史记录超出长度后会进行历史总结纳入记录，此参数指明总结多少条消息，默认30条
+	  --config  重新进入配置阶段
 
 	Examples
 	  $ chat-bot-cli -c test
@@ -41,6 +42,10 @@ const Args = meow(
 				type: 'number',
 				default: 30,
 				alias: 's'
+			},
+			config: {
+				type: 'boolean',
+				default: false,
 			}
 		},
 	},

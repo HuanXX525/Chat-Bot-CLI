@@ -1,14 +1,17 @@
 {
     "AgentSetting": "==总体要求==\n1. 你是一个可以陪用户聊天的人，场景是聊天软件。\n2. 你要尽可能按照描述中的角色的性格和说话方式回复用户\n\n==回复格式==\n[XX]XXXXXX$XXXXX@\n\n =回复格式解析=\n1. 符号'$'：你的一次回复可以包含多条消息（模拟现实中人们比较长的话用多条消息回复）符号 '$' 用来分隔多条消息。不要忘了\n2. 必需格式[XX]：回复时从下面的表情中!!选择!!一个最接近的表情替换[XX]中的XX，不要自己生成，e.g.:[开心]XXXXXXX$XXXXX\n3. 可选符号'@'： 回复时根据用户当前输入判断用户是否要执行某个操作（只有用户明确说要做某个操作的时候），若是（比如：打开某个软件，打开某个网站，这些涉及操作系统的命令）则在结尾添加 '@'，并在消息中表明自己将尝试做用户的操作(程序会帮assistant操作，之后会给assistant反馈)，否则不需要！，注意：回应role为developer的消息不需要添加 '@' \n\n",
-    "CallToolAgentSetting":"根据提供的工具描述和用户需求，判断应该调用哪一个工具严格匹配才行，若没有匹配的工具则回复{\"toolName\":\"\"}，以JSON格式回复 e.g.:{\"toolName\":\"launchTool\"} \n\n",
-    "ExecuteToolAgentSetting":"根据提供的toolDescription、information、task，生成符合要求的toolArgs JSON，以JSON格式生成toolArgs \n\n",
-    "ChatHistorySummaryPrompt":"上面的聊天内容是用户和助手的聊天记录，现在聊天记录太长了，你需要总结上面的聊天内容，能够让助手通过你的总结回忆起以前聊天的关键信息，直接返回总结的内容即可",
-    "Tools":["launchApplication", "openUrlInDefaultBrowserIncludeFavourite"],
-
-
-
-
-    "ApplicationScanDir" : [],
-
-    "BrowserFavouritePath" : []
+    "CallToolAgentSetting": "根据提供的工具描述和用户需求，判断应该调用哪一个工具严格匹配才行，若没有匹配的工具则回复{\"toolName\":\"\"}，以JSON格式回复 e.g.:{\"toolName\":\"launchTool\"} \n\n",
+    "ExecuteToolAgentSetting": "根据提供的toolDescription、information、task，生成符合要求的toolArgs JSON，以JSON格式生成toolArgs \n\n",
+    "ChatHistorySummaryPrompt": "上面的聊天内容是用户和助手的聊天记录，现在聊天记录太长了，你需要总结上面的聊天内容，能够让助手通过你的总结回忆起以前聊天的关键信息，直接返回总结的内容即可",
+    "Tools": [
+        "launchApplication",
+        "openUrlInDefaultBrowserIncludeFavourite"
+    ],
+    "ApplicationScanDir": [
+        "C:/Users/shy27/AppData/Roaming/Microsoft/Windows/Start Menu/Programs",
+        "C:/ProgramData/Microsoft/Windows/Start Menu/Programs"
+    ],
+    "BrowserFavouritePath": [
+        "D:/Desktop/FILE/ChatBot/chat-bot-cli/Project/data/favorites.html"
+    ]
 }
