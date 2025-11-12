@@ -31,12 +31,12 @@ class ChatMessage {
 
 	addUserMessage(userContent) {
 		this.lengthChar += userContent.length;
-		this.chatHistory.push({role: 'user', content: userContent});
+		this.chatHistory.push({role: 'user', content: userContent?userContent:" "});
 	}
 
 	addAssistantMessage(assistantContent) {
 		this.lengthChar += assistantContent.length;
-		this.chatHistory.push({role: 'assistant', content: assistantContent});
+		this.chatHistory.push({role: 'assistant', content: assistantContent?assistantContent:" "});
 	}
 
 	getChatHistory() {
@@ -48,7 +48,7 @@ class ChatMessage {
 		this.lengthChar += content.length;
 		this.chatHistory.push({
 			role: 'user',
-			content: content,
+			content: content?content:" ",
 		});
 	}
 
@@ -152,10 +152,20 @@ class ChatMessage {
 		if (length > this.chatHistoryRestriction) {
 			const summaryLength = Args.flags.summaryLength;
 			const sliceIndex = this.chatHistory.length > summaryLength ? summaryLength : this.chatHistory.length - 1;
+			logger.info(`聊天记录总结长度：${sliceIndex}`)
 			const needToSummary = this.chatHistory.slice(1, sliceIndex);
-			needToSummary.push({ role: 'system', content: chatConfig?.summaryInstruction });
+			needToSummary.push({
+				role: 'user',
+				content: chatConfig?.ChatHistorySummaryPrompt,
+			});
+			needToSummary.forEach(element => {
+				logger.info(`总结内容：${element.role} ${element.content}`);
+			});
 			const response = await AgentForChatMessage.sendMessage(needToSummary);
-			this.chatHistory = [this.chatHistory[0], { role: 'user', content: '[Summary]' + response }, ...this.chatHistory.slice(sliceIndex, this.chatHistory.length > summaryLength ? summaryLength : this.chatHistory.length - 1)];
+			logger.info(`总结结果：${response}`)
+			if (response){
+				this.chatHistory = [this.chatHistory[0], { role: 'user', content: '[Summary]' + response }, ...this.chatHistory.slice(sliceIndex, this.chatHistory.length > summaryLength ? summaryLength : this.chatHistory.length - 1)];
+			}
 		}
 	}
 }

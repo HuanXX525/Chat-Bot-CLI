@@ -2,7 +2,29 @@ import winston from "winston"
 import {format} from 'date-fns';
 import path from "path";
 import dotenv from 'dotenv';
-dotenv.config({path: ["D:/Desktop/FILE/ChatBot/chat-bot-cli/.env"]});
+import fs from 'fs';
+import {fileURLToPath} from 'url';
+
+// 当前文件的绝对路径（类似 CommonJS 中的 __filename）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.join(__dirname, '../../.env');
+// 2. 读取现有内容并修改
+try {
+	const data = fs.readFileSync(envPath, 'utf8');
+	const updatedData = data.replace(
+		/^ROOT_PATH=.*/gm,
+		`ROOT_PATH=${path.join(__dirname, '../../Project')}`,
+	);
+	fs.writeFileSync(envPath, updatedData, 'utf8');
+	console.log('.env 文件修改成功');
+} catch (err) {
+	console.error('修改 .env 失败：', err);
+}
+
+
+dotenv.config({path: [envPath]});
+// dotenv.config({path: ["D:/Desktop/FILE/ChatBot/chat-bot-cli/.env"]});
 // import { log } from "console";
 // import {readJsonFile} from './fileio.js';
 
