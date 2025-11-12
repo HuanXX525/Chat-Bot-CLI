@@ -9,7 +9,7 @@
 ```bash
 # 克隆项目
 git clone <项目地址>
-
+# 在项目根目录
 npm install
 # 进入 chat-bot-cli 目录安装依赖
 cd chat-bot-cli
