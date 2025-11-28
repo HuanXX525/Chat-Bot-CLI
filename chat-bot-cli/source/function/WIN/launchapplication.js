@@ -24,6 +24,7 @@ const startMenuPaths = fileContent?.ApplicationScanDir;
 
 function getApplicationListByPaths() {
 	const applicationList = [];
+	logger.info(`搜索路径：${startMenuPaths}`);
 
 	for(let i = 0; i < startMenuPaths.length; i++) {
 		applicationList.push(
@@ -65,10 +66,10 @@ import { start } from 'repl';
 
 /** 程序列表 */
 const applicationList = getApplicationListByPaths();
-
+// logger.info(`获取到应用程序列表：${applicationList}`);
 
 const description = {
-	task: '从information中给的列表中选择一个符合用户要求的应用程序，如果有多个，优先选择系统相关的而不是第三方软件的，有时可能需要你将用户的软件名称翻译成英文才能匹配',
+	task: '从information中给的列表中选择一个符合用户要求的应用程序，如果有多个，优先选择系统相关的而不是第三方软件的，有时可能需要你将用户的软件名称翻译成英文才能匹配，没有则返回空字符串，不要没找到却打开了其他软件。\n',
 	toolDescription: {
 		name: 'launchapplication',
 		description: '执行你所选择的应用程序',
@@ -118,14 +119,15 @@ async function launchApplication(userDemand) {
 				break;
 			}
 			logger.info(`准备启动应用程序：${applicationName}`);
-			for(let j = 0; j < startMenuPaths.length; j++) {
+			let j = 0;
+			for(j = 0; j < startMenuPaths.length; j++) {
 				_path = path.join(startMenuPaths[j], applicationName);
 				if (fs.existsSync(_path)) {
 					break;
 				}
 			}
 			logger.info(`获取到应用程序路径：${_path}`);
-			if (!_path) {
+			if (!_path|| j === startMenuPaths.length) {
 				userDemand = '没有在列表中找到你所选择的应用程序，请重新回答';
 				logger.warn(`没有在列表中找到所选择的应用程序，准备重试第${i + 1}次`);
 			} else {

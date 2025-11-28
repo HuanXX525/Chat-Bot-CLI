@@ -8,10 +8,11 @@
         "openUrlInDefaultBrowserIncludeFavourite"
     ],
     "ApplicationScanDir": [
-        "C:/Users/shy27/AppData/Roaming/Microsoft/Windows/Start Menu/Programs",
+        "D:\\Desktop",
+        "C:\\Users\\shy27\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
         "C:/ProgramData/Microsoft/Windows/Start Menu/Programs"
     ],
     "BrowserFavouritePath": [
-        "D:/Desktop/FILE/ChatBot/chat-bot-cli/Project/data/favorites.html"
+        "D:\\Desktop\\FILE\\ChatBot\\chat-bot-cli\\Project\\data\\favorites.html"
     ]
 }

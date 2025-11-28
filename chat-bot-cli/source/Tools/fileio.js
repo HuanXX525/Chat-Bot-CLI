@@ -125,6 +125,7 @@ function getFilesWithDepth(
 		folders = [...nextDepthFolder]; // 复制一份新数组
 		nextDepthFolder = [];
 	}
+	logger.info(`文件夹：${startDir} 结果：${result}`);
   return delParent ? result.map(file => removeParentDir(file, startDir)) : result;
 }
 // console.log(getFilesWithDepth(TESTPATH, 1));
